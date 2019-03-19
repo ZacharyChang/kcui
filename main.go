@@ -4,11 +4,24 @@ import (
 	"bufio"
 	"log"
 	"os/exec"
+	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
 )
+
+type LogView struct {
+	sync.RWMutex
+	view *tview.TextView
+}
+
+func NewLogView() *LogView {
+	return &LogView{
+		view: tview.NewTextView(),
+	}
+}
 
 func main() {
 	app := tview.NewApplication()
@@ -20,8 +33,12 @@ func main() {
 		}
 	}
 	listView.SetBorder(true).SetTitle("Pod")
+	// log := NewLogView()
 	logView := tview.NewTextView()
 	logView.SetBorder(true).SetTitle("Log")
+	logText, _ := listView.GetItemText(listView.GetCurrentItem())
+	writePodLogs(logView, logText)
+	// listView.SetChangedFunc()
 	flex := tview.NewFlex().
 		AddItem(listView, 0, 1, false).
 		AddItem(logView, 0, 3, false)
@@ -39,7 +56,7 @@ func main() {
 			}
 			podName, _ := listView.GetItemText(newItem)
 			listView.SetCurrentItem(newItem)
-			writePodLogs(logView, podName)
+			go writePodLogs(logView, podName)
 		}
 		if event.Key() == tcell.KeyDown {
 			newItem := listView.GetCurrentItem() + 1
@@ -48,7 +65,7 @@ func main() {
 			}
 			podName, _ := listView.GetItemText(newItem)
 			listView.SetCurrentItem(newItem)
-			writePodLogs(logView, podName)
+			go writePodLogs(logView, podName)
 		}
 		return event
 	})
@@ -61,7 +78,7 @@ func getPodNames() []string {
 	cmd := "kubectl get pods |awk '{print $1}'"
 	out, err := exec.Command("bash", "-c", cmd).CombinedOutput()
 	if err != nil {
-		log.Fatalf("cmd.Run() fail wtih %s\n", err)
+		log.Fatalf("cmd.Run('%s') fail wtih %s\n", cmd, err)
 	}
 	pods, err := StringToLines(string(out))
 	if err != nil {
@@ -71,12 +88,13 @@ func getPodNames() []string {
 }
 
 func writePodLogs(target *tview.TextView, podName string) {
-	cmd := "kubectl logs " + podName + " --all-containers --tail 100"
-
+	_, _, _, height := target.GetRect()
+	cmd := "kubectl logs " + podName + " --tail " + strconv.Itoa(height)
 	out, err := exec.Command("bash", "-c", cmd).CombinedOutput()
 	if err != nil {
-		log.Fatalf("cmd.Run() fail wtih %s\n", err)
+		log.Fatalf("cmd.Run('%s') fail wtih %s\n", cmd, err)
 	}
+
 	target.SetText(string(out))
 }
 
