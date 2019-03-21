@@ -2,14 +2,26 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"log"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+)
+
+var (
+	kubeconfig = flag.String("kubeconfig", filepath.Join(os.Getenv("HOME"), ".kube", "config"), "(optional) absolute path to the kubeconfig file")
+	kubeclient *kubernetes.Clientset
 )
 
 type LogView struct {
@@ -24,18 +36,25 @@ func NewLogView() *LogView {
 }
 
 func main() {
+	flag.Parse()
+
+	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	kubeclient, err = kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err.Error())
+	}
+
 	app := tview.NewApplication()
 	listView := tview.NewList().ShowSecondaryText(false)
 	listView.SetBorder(true).SetTitle(" Pod ")
 	logView := tview.NewTextView()
 	logView.SetBorder(true).SetTitle(" Log ")
 	for i, podName := range getPodNames() {
-		// skip the column name
-		if i > 0 {
-			listView.AddItem(podName, "", rune('a'+i-1), func() {
-				writePodLogs(logView, podName)
-			})
-		}
+		listView.AddItem(podName, "", rune('a'+i-1), nil)
 	}
 	podName, _ := listView.GetItemText(listView.GetCurrentItem())
 	go writePodLogs(logView, podName)
@@ -59,22 +78,20 @@ func main() {
 	}
 }
 
-func getPodNames() []string {
-	cmd := "kubectl get pods |awk '{print $1}'"
-	out, err := exec.Command("bash", "-c", cmd).CombinedOutput()
+func getPodNames() (names []string) {
+	pods, err := kubeclient.CoreV1().Pods("default").List(metav1.ListOptions{})
 	if err != nil {
-		log.Fatalf("cmd.Run('%s') fail wtih %s\n", cmd, err)
+		panic(err.Error())
 	}
-	pods, err := StringToLines(string(out))
-	if err != nil {
-		log.Fatalf("getPodNames() fail: %s\n", err)
+	for _, v := range pods.Items {
+		names = append(names, v.ObjectMeta.Name)
 	}
-	return pods
+	return
 }
 
 func writePodLogs(target *tview.TextView, podName string) {
 	_, _, _, height := target.GetRect()
-	cmd := "kubectl logs " + podName + " --tail " + strconv.Itoa(height)
+	cmd := "kubectl logs " + podName + " --all-containers --tail " + strconv.Itoa(height)
 	out, err := exec.Command("bash", "-c", cmd).CombinedOutput()
 	if err != nil {
 		log.Fatalf("cmd.Run('%s') fail wtih %s\n", cmd, err)
