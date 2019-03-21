@@ -26,21 +26,24 @@ func NewLogView() *LogView {
 func main() {
 	app := tview.NewApplication()
 	listView := tview.NewList().ShowSecondaryText(false)
-	// skip the column name
+	listView.SetBorder(true).SetTitle(" Pod ")
+	logView := tview.NewTextView()
+	logView.SetBorder(true).SetTitle(" Log ")
 	for i, podName := range getPodNames() {
+		// skip the column name
 		if i > 0 {
-			listView.AddItem(podName, "", rune('a'+i-1), nil)
+			listView.AddItem(podName, "", rune('a'+i-1), func() {
+				writePodLogs(logView, podName)
+			})
 		}
 	}
-	listView.SetBorder(true).SetTitle("Pod")
-	// log := NewLogView()
-	logView := tview.NewTextView()
-	logView.SetBorder(true).SetTitle("Log")
-	logText, _ := listView.GetItemText(listView.GetCurrentItem())
-	writePodLogs(logView, logText)
-	// listView.SetChangedFunc()
+	podName, _ := listView.GetItemText(listView.GetCurrentItem())
+	go writePodLogs(logView, podName)
+	listView.SetChangedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
+		writePodLogs(logView, mainText)
+	})
 	flex := tview.NewFlex().
-		AddItem(listView, 0, 1, false).
+		AddItem(listView, 0, 1, true).
 		AddItem(logView, 0, 3, false)
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyESC {
@@ -48,24 +51,6 @@ func main() {
 		}
 		if event.Key() == tcell.KeyCtrlQ {
 			app.Stop()
-		}
-		if event.Key() == tcell.KeyUp {
-			newItem := listView.GetCurrentItem() - 1
-			if newItem == -1 {
-				newItem = listView.GetItemCount() - 1
-			}
-			podName, _ := listView.GetItemText(newItem)
-			listView.SetCurrentItem(newItem)
-			go writePodLogs(logView, podName)
-		}
-		if event.Key() == tcell.KeyDown {
-			newItem := listView.GetCurrentItem() + 1
-			if newItem == listView.GetItemCount() {
-				newItem = 0
-			}
-			podName, _ := listView.GetItemText(newItem)
-			listView.SetCurrentItem(newItem)
-			go writePodLogs(logView, podName)
 		}
 		return event
 	})
