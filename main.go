@@ -1,19 +1,16 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
 	"flag"
-	"log"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"strconv"
-	"strings"
-	"sync"
-
+	"fmt"
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
+	"io"
+	"os"
+	"path/filepath"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -21,19 +18,9 @@ import (
 
 var (
 	kubeconfig = flag.String("kubeconfig", filepath.Join(os.Getenv("HOME"), ".kube", "config"), "(optional) absolute path to the kubeconfig file")
+	namespace  = flag.String("namespace", "default", "(optional) kubernetes namespace")
 	kubeclient *kubernetes.Clientset
 )
-
-type LogView struct {
-	sync.RWMutex
-	view *tview.TextView
-}
-
-func NewLogView() *LogView {
-	return &LogView{
-		view: tview.NewTextView(),
-	}
-}
 
 func main() {
 	flag.Parse()
@@ -79,7 +66,7 @@ func main() {
 }
 
 func getPodNames() (names []string) {
-	pods, err := kubeclient.CoreV1().Pods("default").List(metav1.ListOptions{})
+	pods, err := kubeclient.CoreV1().Pods(*namespace).List(metav1.ListOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
@@ -91,20 +78,26 @@ func getPodNames() (names []string) {
 
 func writePodLogs(target *tview.TextView, podName string) {
 	_, _, _, height := target.GetRect()
-	cmd := "kubectl logs " + podName + " --all-containers --tail " + strconv.Itoa(height)
-	out, err := exec.Command("bash", "-c", cmd).CombinedOutput()
+	h := int64(height)
+	req := kubeclient.CoreV1().Pods(*namespace).GetLogs(podName, &corev1.PodLogOptions{
+		TailLines: &h,
+		//Follow:    true,
+	})
+	target.Clear()
+
+	podLogs, err := req.Stream()
 	if err != nil {
-		log.Fatalf("cmd.Run('%s') fail wtih %s\n", cmd, err)
+		fmt.Fprint(target, "error in opening stream\n")
+		return
 	}
+	defer podLogs.Close()
 
-	target.SetText(string(out))
-}
-
-func StringToLines(s string) (lines []string, err error) {
-	scanner := bufio.NewScanner(strings.NewReader(s))
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
+	buf := new(bytes.Buffer)
+	_, err = io.Copy(buf, podLogs)
+	if err != nil {
+		fmt.Fprint(target, "error in copy information from podLogs to buf\n")
+		fmt.Fprint(target, err)
+		return
 	}
-	err = scanner.Err()
-	return
+	fmt.Fprint(target, buf.String())
 }
