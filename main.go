@@ -46,7 +46,7 @@ func main() {
 	podName, _ := listView.GetItemText(listView.GetCurrentItem())
 	go writePodLogs(logView, podName)
 	listView.SetChangedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
-		writePodLogs(logView, mainText)
+		go writePodLogs(logView, mainText)
 	})
 	flex := tview.NewFlex().
 		AddItem(listView, 0, 1, true).
