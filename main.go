@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"flag"
-	"fmt"
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
 	"io"
@@ -44,9 +43,9 @@ func main() {
 		listView.AddItem(podName, "", rune('a'+i-1), nil)
 	}
 	podName, _ := listView.GetItemText(listView.GetCurrentItem())
-	go writePodLogs(logView, podName)
+	go writePodLogs(app, logView, podName)
 	listView.SetChangedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
-		go writePodLogs(logView, mainText)
+		go writePodLogs(app, logView, mainText)
 	})
 	flex := tview.NewFlex().
 		AddItem(listView, 0, 1, true).
@@ -76,18 +75,19 @@ func getPodNames() (names []string) {
 	return
 }
 
-func writePodLogs(target *tview.TextView, podName string) {
+func writePodLogs(app *tview.Application, target *tview.TextView, podName string) {
 	_, _, _, height := target.GetRect()
 	h := int64(height)
 	req := kubeclient.CoreV1().Pods(*namespace).GetLogs(podName, &corev1.PodLogOptions{
 		TailLines: &h,
 		//Follow:    true,
 	})
-	target.Clear()
+
+	defer app.Draw()
 
 	podLogs, err := req.Stream()
 	if err != nil {
-		fmt.Fprint(target, "error in opening stream\n")
+		target.SetText("error: fail to open stream\n")
 		return
 	}
 	defer podLogs.Close()
@@ -95,9 +95,8 @@ func writePodLogs(target *tview.TextView, podName string) {
 	buf := new(bytes.Buffer)
 	_, err = io.Copy(buf, podLogs)
 	if err != nil {
-		fmt.Fprint(target, "error in copy information from podLogs to buf\n")
-		fmt.Fprint(target, err)
+		target.SetText("error: fail to copy logs\n")
 		return
 	}
-	fmt.Fprint(target, buf.String())
+	target.SetText(buf.String())
 }
