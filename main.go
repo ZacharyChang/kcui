@@ -6,6 +6,7 @@ import (
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -13,6 +14,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+
+	_ "github.com/ZacharyChang/kcui/log"
 )
 
 var (
@@ -63,7 +66,9 @@ func main() {
 		}
 		return event
 	})
+	log.Print("application started...")
 	if err := app.SetRoot(flex, true).Run(); err != nil {
+		log.Fatal("application failed to start")
 		panic(err)
 	}
 }
