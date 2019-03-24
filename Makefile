@@ -28,7 +28,7 @@ clean:
 
 .PHONY: compress
 compress: build
-ifeq (, $(shell which upx))
-  $(error "No upx found, consider installing upx")
-endif
+	ifeq (, $(shell which upx))
+	  $(error "No upx found, consider installing upx")
+	endif
 	upx $(BINARY)
