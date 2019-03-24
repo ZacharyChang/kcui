@@ -43,9 +43,13 @@ func main() {
 		listView.AddItem(podName, "", rune('a'+i-1), nil)
 	}
 	podName, _ := listView.GetItemText(listView.GetCurrentItem())
-	go writePodLogs(app, logView, podName)
+	go writePodLogs(logView, podName, func() {
+		app.Draw()
+	})
 	listView.SetChangedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
-		go writePodLogs(app, logView, mainText)
+		go writePodLogs(logView, mainText, func() {
+			app.Draw()
+		})
 	})
 	flex := tview.NewFlex().
 		AddItem(listView, 0, 1, true).
@@ -75,7 +79,7 @@ func getPodNames() (names []string) {
 	return
 }
 
-func writePodLogs(app *tview.Application, target *tview.TextView, podName string) {
+func writePodLogs(target *tview.TextView, podName string, callback func()) {
 	_, _, _, height := target.GetRect()
 	h := int64(height)
 	req := kubeclient.CoreV1().Pods(*namespace).GetLogs(podName, &corev1.PodLogOptions{
@@ -83,7 +87,9 @@ func writePodLogs(app *tview.Application, target *tview.TextView, podName string
 		//Follow:    true,
 	})
 
-	defer app.Draw()
+	if callback != nil {
+		defer callback()
+	}
 
 	podLogs, err := req.Stream()
 	if err != nil {
