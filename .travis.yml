@@ -4,4 +4,4 @@ go:
   - "1.12"
 
 script:
-  - go build
+  - make
