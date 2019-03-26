@@ -1,9 +1,9 @@
 package main
 
 import (
-	"bytes"
+	"bufio"
 	"flag"
-	"io"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -94,7 +94,7 @@ func writePodLogs(target *tview.TextView, podName string, callback func()) {
 	h := int64(height)
 	req := kubeclient.CoreV1().Pods(*namespace).GetLogs(podName, &corev1.PodLogOptions{
 		TailLines: &h,
-		//Follow:    true,
+		Follow:    true,
 	})
 
 	if callback != nil {
@@ -106,13 +106,26 @@ func writePodLogs(target *tview.TextView, podName string, callback func()) {
 		target.SetText("error: fail to open stream " + err.Error() + "\n")
 		return
 	}
+
+	reader := bufio.NewReader(podLogs)
+	for {
+		log.Print("read lines")
+
+		line, err := reader.ReadBytes('\n')
+		if err != nil {
+			log.Printf("error: fail to read %s", err.Error())
+			break
+		}
+
+		_, err = fmt.Fprint(target, string(line))
+		if err != nil {
+			log.Printf("error: fail to output %s", err.Error())
+			break
+		}
+		callback()
+	}
+
 	defer podLogs.Close()
 
-	buf := new(bytes.Buffer)
-	_, err = io.Copy(buf, podLogs)
-	if err != nil {
-		target.SetText("error: fail to copy logs\n")
-		return
-	}
-	target.SetText(buf.String())
+	log.Printf("stream finished: %s", podName)
 }

@@ -28,7 +28,4 @@ clean:
 
 .PHONY: compress
 compress: $(BINARY)
-	ifeq (, $(shell which upx))
-	  $(error "No upx found, consider installing upx")
-	endif
 	upx $(BINARY)
