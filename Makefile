@@ -14,7 +14,7 @@ build: clean
 
 .PHONY: linux
 linux: clean
-	export SYSTEM="GOOS=linux"
+	$(eval SYSTEM := GOOS=linux)
 	GO111MODULE=on CGO_ENABLED=$(CGO_ENABLED) $(SYSTEM) go build $(BUILDOPTS) -ldflags=$(LDFLAGS) -o $(BINARY)
 
 .PHONY: test
@@ -27,7 +27,7 @@ clean:
 	rm -f kcui
 
 .PHONY: compress
-compress: build
+compress: $(BINARY)
 	ifeq (, $(shell which upx))
 	  $(error "No upx found, consider installing upx")
 	endif

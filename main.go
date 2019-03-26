@@ -3,12 +3,14 @@ package main
 import (
 	"bytes"
 	"flag"
-	"github.com/gdamore/tcell"
-	"github.com/rivo/tview"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/gdamore/tcell"
+	"github.com/rivo/tview"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,7 +45,7 @@ func main() {
 	logView := tview.NewTextView()
 	logView.SetBorder(true).SetTitle(" Log ")
 	for i, podName := range getPodNames() {
-		listView.AddItem(podName, "", rune('a'+i-1), nil)
+		listView.AddItem(podName, "", rune('A'+i), nil)
 	}
 	podName, _ := listView.GetItemText(listView.GetCurrentItem())
 	go writePodLogs(logView, podName, func() {
@@ -74,6 +76,7 @@ func main() {
 }
 
 func getPodNames() (names []string) {
+	log.Printf("getPodNames() called")
 	pods, err := kubeclient.CoreV1().Pods(*namespace).List(metav1.ListOptions{})
 	if err != nil {
 		panic(err.Error())
@@ -81,10 +84,12 @@ func getPodNames() (names []string) {
 	for _, v := range pods.Items {
 		names = append(names, v.ObjectMeta.Name)
 	}
+	log.Printf("got pods: [ %s ]", strings.Join(names, " "))
 	return
 }
 
 func writePodLogs(target *tview.TextView, podName string, callback func()) {
+	log.Printf("writePodLogs(*tview,TextView, %s) called", podName)
 	_, _, _, height := target.GetRect()
 	h := int64(height)
 	req := kubeclient.CoreV1().Pods(*namespace).GetLogs(podName, &corev1.PodLogOptions{
@@ -98,7 +103,7 @@ func writePodLogs(target *tview.TextView, podName string, callback func()) {
 
 	podLogs, err := req.Stream()
 	if err != nil {
-		target.SetText("error: fail to open stream\n")
+		target.SetText("error: fail to open stream " + err.Error() + "\n")
 		return
 	}
 	defer podLogs.Close()
