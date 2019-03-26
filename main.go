@@ -107,6 +107,8 @@ func writePodLogs(target *tview.TextView, podName string, callback func()) {
 		return
 	}
 
+	target.Clear()
+
 	reader := bufio.NewReader(podLogs)
 	for {
 		log.Print("read lines")
