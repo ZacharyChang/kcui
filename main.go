@@ -111,15 +111,13 @@ func writePodLogs(target *tview.TextView, podName string, callback func()) {
 
 	reader := bufio.NewReader(podLogs)
 	for {
-		log.Print("read lines")
-
-		line, err := reader.ReadBytes('\n')
+		line, err := reader.ReadString('\n')
 		if err != nil {
 			log.Printf("error: fail to read %s", err.Error())
 			break
 		}
 
-		_, err = fmt.Fprint(target, string(line))
+		_, err = fmt.Fprint(target, line)
 		if err != nil {
 			log.Printf("error: fail to output %s", err.Error())
 			break
