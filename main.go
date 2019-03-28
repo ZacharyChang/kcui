@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,7 +16,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	_ "github.com/ZacharyChang/kcui/log"
+	"github.com/ZacharyChang/kcui/log"
 )
 
 var (
@@ -68,7 +67,7 @@ func main() {
 		}
 		return event
 	})
-	log.Print("application started...")
+	log.Info("application started...")
 	if err := app.SetRoot(flex, true).Run(); err != nil {
 		log.Fatal("application failed to start")
 		panic(err)
@@ -76,7 +75,7 @@ func main() {
 }
 
 func getPodNames() (names []string) {
-	log.Printf("getPodNames() called")
+	log.Debug("getPodNames() called")
 	pods, err := kubeclient.CoreV1().Pods(*namespace).List(metav1.ListOptions{})
 	if err != nil {
 		panic(err.Error())
@@ -84,12 +83,12 @@ func getPodNames() (names []string) {
 	for _, v := range pods.Items {
 		names = append(names, v.ObjectMeta.Name)
 	}
-	log.Printf("got pods: [ %s ]", strings.Join(names, " "))
+	log.Debug("got pods: [ %s ]", strings.Join(names, " "))
 	return
 }
 
 func writePodLogs(target *tview.TextView, podName string, callback func()) {
-	log.Printf("writePodLogs(*tview,TextView, %s) called", podName)
+	log.Debug("writePodLogs(*tview,TextView, %s) called", podName)
 	_, _, _, height := target.GetRect()
 	h := int64(height)
 	req := kubeclient.CoreV1().Pods(*namespace).GetLogs(podName, &corev1.PodLogOptions{
@@ -113,13 +112,13 @@ func writePodLogs(target *tview.TextView, podName string, callback func()) {
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil {
-			log.Printf("error: fail to read %s", err.Error())
+			log.Errorf("error: fail to read %s", err.Error())
 			break
 		}
 
 		_, err = fmt.Fprint(target, line)
 		if err != nil {
-			log.Printf("error: fail to output %s", err.Error())
+			log.Errorf("error: fail to output %s", err.Error())
 			break
 		}
 		callback()
@@ -127,5 +126,5 @@ func writePodLogs(target *tview.TextView, podName string, callback func()) {
 
 	defer podLogs.Close()
 
-	log.Printf("stream finished: %s", podName)
+	log.Info("stream finished: %s", podName)
 }
