@@ -35,7 +35,7 @@ func log(level string, v ...interface{}) {
 }
 
 func logf(level string, format string, v ...interface{}) {
-	golog.Printf(currentTime(), level, fmt.Sprintf(format, v...))
+	golog.Print(currentTime(), level, fmt.Sprintf(format, v...))
 }
 
 func Fatal(v ...interface{}) {

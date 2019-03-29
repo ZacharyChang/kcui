@@ -83,12 +83,12 @@ func getPodNames() (names []string) {
 	for _, v := range pods.Items {
 		names = append(names, v.ObjectMeta.Name)
 	}
-	log.Debug("got pods: [ %s ]", strings.Join(names, " "))
+	log.Debugf("got pods: [ %s ]", strings.Join(names, " "))
 	return
 }
 
 func writePodLogs(target *tview.TextView, podName string, callback func()) {
-	log.Debug("writePodLogs(*tview,TextView, %s) called", podName)
+	log.Debugf("writePodLogs(*tview.TextView, %s) called", podName)
 	_, _, _, height := target.GetRect()
 	h := int64(height)
 	req := kubeclient.CoreV1().Pods(*namespace).GetLogs(podName, &corev1.PodLogOptions{
@@ -126,5 +126,5 @@ func writePodLogs(target *tview.TextView, podName string, callback func()) {
 
 	defer podLogs.Close()
 
-	log.Info("stream finished: %s", podName)
+	log.Infof("stream finished: %s", podName)
 }
