@@ -6,12 +6,14 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
+	"strings"
 
 	"github.com/ZacharyChang/kcui/log"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 type Client struct {
@@ -48,8 +50,10 @@ func (c *Client) SetNamespace(ns string) *Client {
 func (c *Client) PodLogHandler(podName string, w io.Writer, callback func()) {
 	log.Debugf("client: %v", c)
 	log.Debugf("namespace: %s", c.namespace)
+	lines := int64(100)
 	req := c.kubeclient.CoreV1().Pods(c.namespace).GetLogs(podName, &corev1.PodLogOptions{
-		Follow: true,
+		TailLines: &lines,
+		Follow:    true,
 	})
 	defer callback()
 
@@ -79,5 +83,18 @@ func (c *Client) PodLogHandler(podName string, w io.Writer, callback func()) {
 	defer podLogs.Close()
 
 	log.Infof("stream finished: %s", podName)
+	return
+}
+
+func (c *Client) GetPodNames() (names []string) {
+	log.Debug("getPodNames() called")
+	pods, err := c.kubeclient.CoreV1().Pods(c.namespace).List(metav1.ListOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+	for _, v := range pods.Items {
+		names = append(names, v.ObjectMeta.Name)
+	}
+	log.Debugf("got pods: [ %s ]", strings.Join(names, " "))
 	return
 }
