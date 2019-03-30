@@ -47,9 +47,11 @@ func (c *Client) SetNamespace(ns string) *Client {
 	return c
 }
 
-func (c *Client) PodLogHandler(podName string, w io.Writer, callback func()) {
+func (c *Client) PodLogHandler(podName string, w io.Writer, callback func()) io.ReadCloser {
 	log.Debugf("client: %v", c)
 	log.Debugf("namespace: %s", c.namespace)
+	log.Debugf("getting log from %s:%s", c.namespace, podName)
+
 	lines := int64(100)
 	req := c.kubeclient.CoreV1().Pods(c.namespace).GetLogs(podName, &corev1.PodLogOptions{
 		TailLines: &lines,
@@ -61,29 +63,29 @@ func (c *Client) PodLogHandler(podName string, w io.Writer, callback func()) {
 	if err != nil {
 		log.Errorf("error: fail to open stream %s", err.Error())
 		_, err = fmt.Fprintf(w, "error: fail to open stream %s\n", err.Error())
-		return
+		return podLogs
 	}
 	log.Debug("begin read")
 
-	reader := bufio.NewReader(podLogs)
-	for {
-		line, err := reader.ReadString('\n')
-		if err != nil {
-			log.Errorf("error: fail to read %s", err.Error())
-			break
+	go func() {
+		reader := bufio.NewReader(podLogs)
+		for {
+			line, err := reader.ReadString('\n')
+			if err != nil {
+				log.Errorf("error: fail to read %s", err.Error())
+				break
+			}
+
+			_, err = fmt.Fprint(w, line)
+			if err != nil {
+				log.Errorf("error: fail to output %s", err.Error())
+				break
+			}
+			callback()
 		}
+	}()
 
-		_, err = fmt.Fprint(w, line)
-		if err != nil {
-			log.Errorf("error: fail to output %s", err.Error())
-			break
-		}
-	}
-
-	defer podLogs.Close()
-
-	log.Infof("stream finished: %s", podName)
-	return
+	return podLogs
 }
 
 func (c *Client) GetPodNames() (names []string) {
