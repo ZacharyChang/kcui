@@ -16,10 +16,11 @@ variables:
   modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)' # Path to the module's code
 
 steps:
+- checkout: self
 - task: GoTool@0
   inputs:
     version: '1.12'
 - script: |
     make
-  workingDirectory: '$(modulePath)'
+  workingDirectory: '$(Build.SourcesDirectory)'
   displayName: 'Get dependencies, then build'
