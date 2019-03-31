@@ -10,10 +10,10 @@ import (
 
 type LogView struct {
 	sync.Mutex
-	Content *tview.TextView
-	PodName string
-	handler func(string, io.Writer, func()) io.ReadCloser
-	closer  io.ReadCloser
+	Content    *tview.TextView
+	PodName    string
+	handler    func(string, io.Writer, func()) io.ReadCloser
+	closerList []io.ReadCloser
 }
 
 func NewLogView() *LogView {
@@ -28,16 +28,21 @@ func (logView *LogView) SetHandler(handler func(string, io.Writer, func()) io.Re
 }
 
 func (logView *LogView) Refresh(callback func()) {
+	logView.Lock()
 	log.Debug("Refresh called")
-	if logView.closer != nil {
-		err := logView.closer.Close()
-		if err != nil {
-			log.Errorf("Fail to close last reader: %s", err.Error())
+	for _, closer := range logView.closerList {
+		if closer != nil {
+			err := closer.Close()
+			if err != nil {
+				log.Errorf("Fail to close last reader: %s", err.Error())
+			}
+			log.Debug("Last reader closed")
 		}
-		log.Debug("Last reader closed")
 	}
+
 	logView.Content.Clear()
 	go func() {
-		logView.closer = logView.handler(logView.PodName, logView.Content, callback)
+		logView.closerList = append(logView.closerList, logView.handler(logView.PodName, logView.Content, callback))
 	}()
+	logView.Unlock()
 }
