@@ -4,9 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/ZacharyChang/kcui/log"
 
@@ -25,8 +24,8 @@ type Handler interface {
 	Handle() *io.Writer
 }
 
-func NewClient() *Client {
-	config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(os.Getenv("HOME"), ".kube", "config"))
+func NewClient(configPath string) *Client {
+	config, err := clientcmd.BuildConfigFromFlags("", configPath)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -52,7 +51,7 @@ func (c *Client) PodLogHandler(podName string, w io.Writer, callback func()) io.
 	log.Debugf("namespace: %s", c.namespace)
 	log.Debugf("getting log from %s:%s", c.namespace, podName)
 
-	lines := int64(100)
+	lines := int64(50)
 	req := c.kubeclient.CoreV1().Pods(c.namespace).GetLogs(podName, &corev1.PodLogOptions{
 		TailLines: &lines,
 		Follow:    true,
@@ -82,6 +81,7 @@ func (c *Client) PodLogHandler(podName string, w io.Writer, callback func()) io.
 				break
 			}
 			callback()
+			time.Sleep(500)
 		}
 	}()
 

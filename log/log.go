@@ -7,12 +7,21 @@ import (
 	"time"
 )
 
-const (
-	fatal = " [FATAL] "
-	error = " [ERROR] "
-	warn  = " [WARN] "
-	info  = " [INFO] "
-	debug = " [DEBUG] "
+type logLevel struct {
+	level  int
+	prefix string
+}
+
+var (
+	FatalLevel = logLevel{1, " [FATAL] "}
+	ErrorLevel = logLevel{2, " [ERROR] "}
+	WarnLevel  = logLevel{3, " [WARN] "}
+	InfoLevel  = logLevel{4, " [INFO] "}
+	DebugLevel = logLevel{5, " [DEBUG] "}
+)
+
+var (
+	currentLevel = InfoLevel
 )
 
 func init() {
@@ -26,66 +35,75 @@ func init() {
 	golog.SetOutput(f)
 }
 
+// SetLogLevel set current log level, only the higher level log will be written to the file
+func SetLogLevel(level logLevel) {
+	currentLevel = level
+}
+
 func currentTime() string {
 	return time.Now().Format("2006-01-02T15:04:05.000Z07:00")
 }
 
-func log(level string, v ...interface{}) {
-	golog.Print(currentTime(), level, fmt.Sprint(v...))
+func log(level logLevel, v ...interface{}) {
+	if currentLevel.level >= level.level {
+		golog.Print(currentTime(), level.prefix, fmt.Sprint(v...))
+	}
 }
 
-func logf(level string, format string, v ...interface{}) {
-	golog.Print(currentTime(), level, fmt.Sprintf(format, v...))
+func logf(level logLevel, format string, v ...interface{}) {
+	if currentLevel.level >= level.level {
+		golog.Print(currentTime(), level.prefix, fmt.Sprintf(format, v...))
+	}
 }
 
 // Fatal print logs like log.Print, but has a prefix with "[FATAL]"
 func Fatal(v ...interface{}) {
-	log(fatal, v...)
+	log(FatalLevel, v...)
 	os.Exit(1)
 }
 
 // Fatalf print logs like log.Printf, but has a prefix with "[FATAL]"
 func Fatalf(format string, v ...interface{}) {
-	logf(fatal, format, v...)
+	logf(FatalLevel, format, v...)
 	os.Exit(1)
 }
 
 // Error print logs like log.Print, but has a prefix with "[ERROR]"
 func Error(v ...interface{}) {
-	log(error, v...)
+	log(ErrorLevel, v...)
 }
 
 // Errorf print logs like log.Printf, but has a prefix with "[ERROR]"
 func Errorf(format string, v ...interface{}) {
-	logf(error, format, v...)
+	logf(ErrorLevel, format, v...)
 }
 
 // Warn print logs like log.Print, but has a prefix with "[WARN]"
 func Warn(v ...interface{}) {
-	log(warn, v...)
+	log(WarnLevel, v...)
 }
 
 // Warnf print logs like log.Printf, but has a prefix with "[WARN]"
 func Warnf(foramt string, v ...interface{}) {
-	logf(warn, foramt, v...)
+	logf(WarnLevel, foramt, v...)
 }
 
 // Info print logs like log.Print, but has a prefix with "[INFO]"
 func Info(v ...interface{}) {
-	log(info, v...)
+	log(InfoLevel, v...)
 }
 
 // Infof print logs like log.Printf, but has a prefix with "[INFO]"
 func Infof(format string, v ...interface{}) {
-	logf(info, format, v...)
+	logf(InfoLevel, format, v...)
 }
 
 // Debug print logs like log.Print, but has a prefix with "[DEBUG]"
 func Debug(v ...interface{}) {
-	log(debug, v...)
+	log(DebugLevel, v...)
 }
 
 // Debugf print logs like log.Printf, but has a prefix with "[DEBUG]"
 func Debugf(format string, v ...interface{}) {
-	logf(debug, format, v...)
+	logf(DebugLevel, format, v...)
 }

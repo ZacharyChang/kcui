@@ -17,10 +17,14 @@ var (
 	namespace  = flag.String("namespace", "default", "(optional) k8s namespace")
 )
 
-func main() {
+func init() {
 	flag.Parse()
+	log.SetLogLevel(log.InfoLevel)
+}
 
-	client := k8s.NewClient().SetNamespace(*namespace)
+func main() {
+
+	client := k8s.NewClient(*kubeconfig).SetNamespace(*namespace)
 
 	app := tview.NewApplication()
 	podListView := view.NewPodListView()
