@@ -4,6 +4,8 @@ import (
 	"fmt"
 	golog "log"
 	"os"
+	"runtime"
+	"strings"
 	"time"
 )
 
@@ -15,8 +17,8 @@ type logLevel struct {
 var (
 	FatalLevel = logLevel{1, " [FATAL] "}
 	ErrorLevel = logLevel{2, " [ERROR] "}
-	WarnLevel  = logLevel{3, " [WARN] "}
-	InfoLevel  = logLevel{4, " [INFO] "}
+	WarnLevel  = logLevel{3, " [WARN]  "}
+	InfoLevel  = logLevel{4, " [INFO]  "}
 	DebugLevel = logLevel{5, " [DEBUG] "}
 )
 
@@ -46,13 +48,35 @@ func currentTime() string {
 
 func log(level logLevel, v ...interface{}) {
 	if currentLevel.level >= level.level {
-		golog.Print(currentTime(), level.prefix, fmt.Sprint(v...))
+		// runtime info
+		file := "??"
+		line := 0
+		if _, _file, _line, ok := runtime.Caller(2); ok {
+			index := strings.LastIndex(_file, "/") + 1
+			if index >= 0 {
+				file, line = _file[index:], _line
+			} else {
+				file, line = _file, _line
+			}
+		}
+		golog.Print(currentTime(), level.prefix, fmt.Sprintf("%s:%d\t| ", file, line), fmt.Sprint(v...))
 	}
 }
 
 func logf(level logLevel, format string, v ...interface{}) {
 	if currentLevel.level >= level.level {
-		golog.Print(currentTime(), level.prefix, fmt.Sprintf(format, v...))
+		// runtime info
+		file := "??"
+		line := 0
+		if _, _file, _line, ok := runtime.Caller(2); ok {
+			index := strings.LastIndex(_file, "/") + 1
+			if index >= 0 {
+				file, line = _file[index:], _line
+			} else {
+				file, line = _file, _line
+			}
+		}
+		golog.Print(currentTime(), level.prefix, fmt.Sprintf("%s:%d\t| ", file, line), fmt.Sprintf(format, v...))
 	}
 }
 
