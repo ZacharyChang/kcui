@@ -10,15 +10,16 @@ import (
 
 type LogView struct {
 	sync.Mutex
-	Content    *tview.TextView
-	PodName    string
-	handler    func(string, io.Writer, func()) io.ReadCloser
-	closerList []io.ReadCloser
+	Content   *tview.TextView
+	PodName   string
+	handler   func(string, io.Writer, func()) io.ReadCloser
+	closerMap map[string]io.ReadCloser
 }
 
 func NewLogView() *LogView {
 	return &LogView{
-		Content: tview.NewTextView(),
+		Content:   tview.NewTextView(),
+		closerMap: make(map[string]io.ReadCloser, 0),
 	}
 }
 
@@ -28,21 +29,21 @@ func (logView *LogView) SetHandler(handler func(string, io.Writer, func()) io.Re
 }
 
 func (logView *LogView) Refresh(callback func()) {
-	logView.Lock()
 	log.Debug("Refresh called")
-	for _, closer := range logView.closerList {
-		if closer != nil {
-			err := closer.Close()
-			if err != nil {
-				log.Errorf("Fail to close last reader: %s", err.Error())
-			}
-			log.Debug("Last reader closed")
-		}
-	}
 
 	logView.Content.Clear()
 	go func() {
-		logView.closerList = append(logView.closerList, logView.handler(logView.PodName, logView.Content, callback))
+		// close other stream
+		for k, closer := range logView.closerMap {
+			if closer != nil {
+				err := closer.Close()
+				if err != nil {
+					log.Errorf("Fail to close [%s] last reader: %s", k, err.Error())
+					continue
+				}
+				log.Debugf("Reader [%s] closed", k)
+			}
+		}
+		logView.closerMap[logView.PodName] = logView.handler(logView.PodName, logView.Content, callback)
 	}()
-	logView.Unlock()
 }
