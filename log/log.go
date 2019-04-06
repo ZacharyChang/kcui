@@ -9,6 +9,10 @@ import (
 	"time"
 )
 
+const (
+	DefaultCallerDepth = 2
+)
+
 type logLevel struct {
 	level  int
 	prefix string
@@ -51,7 +55,7 @@ func log(level logLevel, v ...interface{}) {
 		// runtime info
 		file := "??"
 		line := 0
-		if _, _file, _line, ok := runtime.Caller(2); ok {
+		if _, _file, _line, ok := runtime.Caller(DefaultCallerDepth); ok {
 			index := strings.LastIndex(_file, "/") + 1
 			if index >= 0 {
 				file, line = _file[index:], _line
