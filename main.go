@@ -1,30 +1,47 @@
 package main
 
 import (
-	"flag"
-	"github.com/gdamore/tcell"
-	"github.com/rivo/tview"
+	"fmt"
 	"os"
-	"path/filepath"
+	"time"
 
 	"github.com/ZacharyChang/kcui/k8s"
 	"github.com/ZacharyChang/kcui/log"
 	"github.com/ZacharyChang/kcui/view"
-)
 
-var (
-	kubeconfig = flag.String("kubeconfig", filepath.Join(os.Getenv("HOME"), ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-	namespace  = flag.String("namespace", "default", "(optional) k8s namespace")
+	"github.com/gdamore/tcell"
+	"github.com/rivo/tview"
+	"gopkg.in/urfave/cli.v1"
 )
-
-func init() {
-	flag.Parse()
-	log.SetLogLevel(log.InfoLevel)
-}
 
 func main() {
+	app := cli.NewApp()
+	app.Name = "kcui"
+	app.Compiled = time.Now()
+	app.Usage = "k8s log tail tool"
 
-	client := k8s.NewClient(*kubeconfig).SetNamespace(*namespace)
+	opts := NewOptions()
+	opts.AddFlags(app)
+
+	app.Action = func(c *cli.Context) error {
+		if err := startView(opts); err != nil {
+			return cli.NewExitError(fmt.Sprintf("application failed to start: %v\n", err), 1)
+		}
+		log.Info("application started...")
+		return nil
+	}
+
+	if err := app.Run(os.Args); err != nil {
+		log.Errorf("fail to run: %s", err.Error())
+	}
+
+}
+
+func startView(opts *Options) error {
+	client := k8s.NewClient(opts.Kubeconfig).SetNamespace(opts.Namespace)
+	if opts.Debug {
+		log.SetLogLevel(log.DebugLevel)
+	}
 
 	app := tview.NewApplication()
 	podListView := view.NewPodListView()
@@ -62,9 +79,8 @@ func main() {
 		}
 		return event
 	})
-	log.Info("application started...")
 	if err := app.SetRoot(flex, true).Run(); err != nil {
-		log.Fatal("application failed to start")
-		panic(err)
+		return err
 	}
+	return nil
 }
