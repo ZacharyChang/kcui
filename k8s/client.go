@@ -46,6 +46,10 @@ func (c *Client) SetNamespace(ns string) *Client {
 	return c
 }
 
+func (c *Client) GetNamespace() string {
+	return c.namespace
+}
+
 func (c *Client) PodLogHandler(podName string, w io.Writer, callback func()) io.ReadCloser {
 	log.Debugf("client: %v", c)
 	log.Debugf("namespace: %s", c.namespace)
