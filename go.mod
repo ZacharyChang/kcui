@@ -16,6 +16,8 @@ require (
 	github.com/json-iterator/go v1.1.6 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/onsi/ginkgo v1.8.0
+	github.com/onsi/gomega v1.5.0
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/rivo/tview v0.0.0-20190319111340-8d5eba0c2f51
 	github.com/rivo/uniseg v0.0.0-20190313204849-f699dde9c340 // indirect
