@@ -19,7 +19,7 @@ jobs:
         # Set KUBECONFIG environment variable
         - export KUBECONFIG="$(kind get kubeconfig-path)"
         # Install ginkgo to go path
-        - go get github.com/onsi/ginkgo
+        - go get github.com/onsi/ginkgo/ginkgo
       script:
         - make
         - make test
