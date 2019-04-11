@@ -2,20 +2,23 @@ package k8s_test
 
 import (
 	"os"
-	"path/filepath"
+
+	. "github.com/ZacharyChang/kcui/k8s"
+	"github.com/ZacharyChang/kcui/pkg/option"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	. "github.com/ZacharyChang/kcui/k8s"
 )
 
 var _ = Describe("K8s", func() {
 	var (
 		testClient *Client
+		opts       *option.Options
 	)
 	BeforeEach(func() {
-		testClient = NewClient(filepath.Join(os.Getenv("HOME"), ".kube", "config"))
+		opts = option.NewOptions()
+		opts.ConfigValue = os.Getenv("KUBECONFIG")
+		testClient = NewClient(opts)
 		testClient.SetNamespace("test")
 	})
 

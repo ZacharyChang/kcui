@@ -7,6 +7,7 @@ import (
 
 	"github.com/ZacharyChang/kcui/k8s"
 	"github.com/ZacharyChang/kcui/log"
+	"github.com/ZacharyChang/kcui/pkg/option"
 	"github.com/ZacharyChang/kcui/view"
 
 	"github.com/gdamore/tcell"
@@ -20,7 +21,7 @@ func main() {
 	app.Compiled = time.Now()
 	app.Usage = "k8s log tail tool"
 
-	opts := NewOptions()
+	opts := option.NewOptions()
 	opts.AddFlags(app)
 
 	app.Action = func(c *cli.Context) error {
@@ -37,8 +38,8 @@ func main() {
 
 }
 
-func startView(opts *Options) error {
-	client := k8s.NewClient(opts.Kubeconfig).SetNamespace(opts.Namespace)
+func startView(opts *option.Options) error {
+	client := k8s.NewClient(opts)
 	if opts.Debug {
 		log.SetLogLevel(log.DebugLevel)
 	}

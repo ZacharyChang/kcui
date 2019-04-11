@@ -1,4 +1,4 @@
-package main
+package option
 
 import (
 	"os"
@@ -9,9 +9,10 @@ import (
 
 // Options contains start options
 type Options struct {
-	Kubeconfig string
-	Namespace  string
-	Debug      bool
+	ConfigFile  string
+	ConfigValue string
+	Namespace   string
+	Debug       bool
 }
 
 // NewOptions returns a new Options
@@ -26,8 +27,14 @@ func (opts *Options) AddFlags(app *cli.App) {
 		cli.StringFlag{
 			Name:        "kubeconfig",
 			Usage:       "Path to the kube config.",
-			Destination: &opts.Kubeconfig,
+			Destination: &opts.ConfigFile,
 			Value:       filepath.Join(os.Getenv("HOME"), ".kube", "config"),
+		},
+		cli.StringFlag{
+			Name:        "configvalue",
+			Usage:       "Kube config value in string. This can be set from environment value 'KUBECONFIG'",
+			Destination: &opts.ConfigValue,
+			EnvVar:      "KUBECONFIG",
 		},
 		cli.StringFlag{
 			Name:        "namespace",
