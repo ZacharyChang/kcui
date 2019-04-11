@@ -19,7 +19,7 @@ linux: clean
 
 .PHONY: test
 test:
-	GO111MODULE=on go test -v -race ./...
+	GO111MODULE=on ginkgo -v -race --cover ./...
 
 .PHONY: clean
 clean:

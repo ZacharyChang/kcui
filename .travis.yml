@@ -12,15 +12,14 @@ jobs:
       before_script:
         # Download and install kubectl
         - curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.12.0/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
-
         # Download and install KinD
         - go get sigs.k8s.io/kind
-
         # Create a new Kubernetes cluster using KinD
         - kind create cluster
-
         # Set KUBECONFIG environment variable
         - export KUBECONFIG="$(kind get kubeconfig-path)"
+        # Install ginkgo to go path
+        - go get github.com/onsi/ginkgo
       script:
         - make
-        - kubectl describe nodes
+        - make test
