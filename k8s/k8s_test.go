@@ -17,7 +17,7 @@ var _ = Describe("K8s", func() {
 	)
 	BeforeEach(func() {
 		opts = option.NewOptions()
-		opts.ConfigValue = os.Getenv("KUBECONFIG")
+		opts.Kubeconfig = os.Getenv("KUBECONFIG")
 		testClient = NewClient(opts)
 		testClient.SetNamespace("test")
 	})

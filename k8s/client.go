@@ -13,7 +13,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -27,13 +26,7 @@ type Handler interface {
 }
 
 func NewClient(opts *option.Options) *Client {
-	var config *rest.Config
-	var err error
-	if opts.ConfigValue != "" {
-		config, err = clientcmd.RESTConfigFromKubeConfig([]byte(opts.ConfigValue))
-	} else {
-		config, err = clientcmd.BuildConfigFromFlags("", opts.ConfigFile)
-	}
+	config, err := clientcmd.BuildConfigFromFlags("", opts.Kubeconfig)
 	if err != nil {
 		panic(err.Error())
 	}
