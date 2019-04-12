@@ -10,36 +10,29 @@ import (
 
 type LogView struct {
 	sync.Mutex
-	Content   *tview.TextView
-	PodName   string
-	handler   func(string, io.Writer, func()) io.ReadCloser
-	closerMap map[string]io.ReadCloser
+	Content *tview.TextView
+	PodName string
+	handler func(string, io.Writer, func(), <-chan struct{})
+	stopCh  chan struct{}
 }
 
 func NewLogView() *LogView {
 	return &LogView{
-		Content:   tview.NewTextView().SetDynamicColors(true),
-		closerMap: make(map[string]io.ReadCloser, 0),
+		Content: tview.NewTextView().SetDynamicColors(true),
+		stopCh:  make(chan struct{}),
 	}
 }
 
-func (logView *LogView) SetHandler(handler func(string, io.Writer, func()) io.ReadCloser) {
+func (logView *LogView) SetHandler(handler func(string, io.Writer, func(), <-chan struct{})) {
 	log.Debug("SetHandler called")
 	logView.handler = handler
 }
 
 func (logView *LogView) Stop() {
+	log.Debug("Stop called")
 	logView.Lock()
-	for k, closer := range logView.closerMap {
-		if closer != nil {
-			err := closer.Close()
-			if err != nil {
-				log.Errorf("Fail to close [%s] last reader: %s", k, err.Error())
-				continue
-			}
-			log.Debugf("Reader [%s] closed", k)
-		}
-	}
+	log.Debug(logView.stopCh)
+	close(logView.stopCh)
 	logView.Unlock()
 }
 
@@ -47,9 +40,10 @@ func (logView *LogView) Refresh(callback func()) {
 	log.Debug("Refresh called")
 
 	logView.Content.Clear()
-	defer logView.Stop()
 
 	go func() {
-		logView.closerMap[logView.PodName] = logView.handler(logView.PodName, tview.ANSIWriter(logView.Content), callback)
+		logView.Stop()
+		logView.stopCh = make(chan struct{})
+		logView.handler(logView.PodName, tview.ANSIWriter(logView.Content), callback, logView.stopCh)
 	}()
 }

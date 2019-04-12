@@ -51,7 +51,7 @@ func (c *Client) GetNamespace() string {
 	return c.namespace
 }
 
-func (c *Client) PodLogHandler(podName string, w io.Writer, callback func()) io.ReadCloser {
+func (c *Client) PodLogHandler(podName string, w io.Writer, callback func(), stopCh <-chan struct{}) {
 	log.Debugf("client: %v", c)
 	log.Debugf("namespace: %s", c.namespace)
 	log.Debugf("getting log from %s:%s", c.namespace, podName)
@@ -67,13 +67,19 @@ func (c *Client) PodLogHandler(podName string, w io.Writer, callback func()) io.
 	if err != nil {
 		log.Errorf("error: fail to open stream %s", err.Error())
 		_, err = fmt.Fprintf(w, "error: fail to open stream %s\n", err.Error())
-		return podLogs
+		return
 	}
 	log.Debug("begin read")
 
 	go func() {
 		reader := bufio.NewReader(podLogs)
 		for {
+			select {
+			case <-stopCh:
+				podLogs.Close()
+				return
+			default:
+			}
 			line, err := reader.ReadString('\n')
 			if err != nil {
 				log.Errorf("error: fail to read %s", err.Error())
@@ -89,8 +95,7 @@ func (c *Client) PodLogHandler(podName string, w io.Writer, callback func()) io.
 			time.Sleep(500)
 		}
 	}()
-
-	return podLogs
+	return
 }
 
 func (c *Client) GetPodNames() (names []string) {
