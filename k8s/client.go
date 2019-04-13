@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ZacharyChang/kcui/log"
+	"github.com/ZacharyChang/kcui/pkg/log"
 	"github.com/ZacharyChang/kcui/pkg/option"
 
 	corev1 "k8s.io/api/core/v1"

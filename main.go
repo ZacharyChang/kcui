@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/ZacharyChang/kcui/k8s"
-	"github.com/ZacharyChang/kcui/log"
+	"github.com/ZacharyChang/kcui/pkg/log"
 	"github.com/ZacharyChang/kcui/pkg/option"
 	"github.com/ZacharyChang/kcui/view"
 

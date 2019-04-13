@@ -4,7 +4,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/ZacharyChang/kcui/log"
+	"github.com/ZacharyChang/kcui/pkg/log"
 	"github.com/rivo/tview"
 )
 
