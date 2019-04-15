@@ -13,6 +13,7 @@ import (
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
 	"gopkg.in/urfave/cli.v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 func main() {
@@ -52,21 +53,15 @@ func startView(opts *option.Options) error {
 
 	logView := view.NewLogView()
 	logView.Content.SetBorder(true).SetTitle(" Log ")
-	podListView.Refresh(func() {
-		app.Draw()
-	})
+	podListView.Refresh()
 	podName, _ := podListView.Content.GetItemText(podListView.Content.GetCurrentItem())
 
 	logView.PodName = podName
 	logView.SetHandler(client.PodLogHandler)
-	logView.Refresh(func() {
-		app.Draw()
-	})
+	logView.Refresh()
 	podListView.Content.SetChangedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
 		logView.PodName = mainText
-		logView.Refresh(func() {
-			app.Draw()
-		})
+		logView.Refresh()
 	})
 	flex := tview.NewFlex().
 		AddItem(podListView.Content, 0, 1, true).
@@ -80,6 +75,10 @@ func startView(opts *option.Options) error {
 		}
 		return event
 	})
+	go wait.Forever(func() {
+		log.Debug("loop for updating...")
+		app.Draw()
+	}, time.Millisecond*500)
 	if err := app.SetRoot(flex, true).Run(); err != nil {
 		return err
 	}

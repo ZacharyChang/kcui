@@ -25,10 +25,9 @@ func (view *PodListView) SetPodList(list []string) *PodListView {
 	return view
 }
 
-func (view *PodListView) Refresh(callback func()) {
+func (view *PodListView) Refresh() {
 	view.Content.Clear()
 	for i, podName := range view.PodList {
 		view.Content.AddItem(podName, "", rune('A'+i), nil)
 	}
-	defer callback()
 }

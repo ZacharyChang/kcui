@@ -51,7 +51,7 @@ func (c *Client) GetNamespace() string {
 	return c.namespace
 }
 
-func (c *Client) PodLogHandler(podName string, w io.Writer, callback func(), stopCh <-chan struct{}) {
+func (c *Client) PodLogHandler(podName string, w io.Writer, stopCh <-chan struct{}) {
 	log.Debugf("client: %v", c)
 	log.Debugf("namespace: %s", c.namespace)
 	log.Debugf("getting log from %s:%s", c.namespace, podName)
@@ -61,7 +61,6 @@ func (c *Client) PodLogHandler(podName string, w io.Writer, callback func(), sto
 		TailLines: &lines,
 		Follow:    true,
 	})
-	defer callback()
 
 	podLogs, err := req.Stream()
 	if err != nil {
@@ -70,31 +69,28 @@ func (c *Client) PodLogHandler(podName string, w io.Writer, callback func(), sto
 		return
 	}
 	log.Debug("begin read")
+	defer podLogs.Close()
 
-	go func() {
-		reader := bufio.NewReader(podLogs)
-		for {
-			select {
-			case <-stopCh:
-				podLogs.Close()
-				return
-			default:
-			}
-			line, err := reader.ReadString('\n')
-			if err != nil {
-				log.Errorf("error: fail to read %s", err.Error())
-				break
-			}
-
-			_, err = fmt.Fprint(w, line)
-			if err != nil {
-				log.Errorf("error: fail to output %s", err.Error())
-				break
-			}
-			callback()
-			time.Sleep(500)
+	reader := bufio.NewReader(podLogs)
+	for {
+		select {
+		case <-stopCh:
+			return
+		default:
 		}
-	}()
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			log.Errorf("error: fail to read %s", err.Error())
+			break
+		}
+
+		_, err = fmt.Fprint(w, line)
+		if err != nil {
+			log.Errorf("error: fail to output %s", err.Error())
+			break
+		}
+		time.Sleep(500)
+	}
 	return
 }
 

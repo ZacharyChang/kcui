@@ -12,7 +12,7 @@ type LogView struct {
 	sync.Mutex
 	Content *tview.TextView
 	PodName string
-	handler func(string, io.Writer, func(), <-chan struct{})
+	handler func(string, io.Writer, <-chan struct{})
 	stopCh  chan struct{}
 }
 
@@ -23,27 +23,24 @@ func NewLogView() *LogView {
 	}
 }
 
-func (logView *LogView) SetHandler(handler func(string, io.Writer, func(), <-chan struct{})) {
+func (logView *LogView) SetHandler(handler func(string, io.Writer, <-chan struct{})) {
 	log.Debug("SetHandler called")
 	logView.handler = handler
 }
 
-func (logView *LogView) Stop() {
-	log.Debug("Stop called")
-	logView.Lock()
-	log.Debug(logView.stopCh)
-	close(logView.stopCh)
-	logView.Unlock()
+func (logView *LogView) Start() {
+	logView.Content.Clear()
+	logView.stopCh = make(chan struct{})
+	go logView.handler(logView.PodName, tview.ANSIWriter(logView.Content), logView.stopCh)
 }
 
-func (logView *LogView) Refresh(callback func()) {
-	log.Debug("Refresh called")
+func (logView *LogView) Stop() {
+	log.Debug("Stop called")
+	log.Debug(logView.stopCh)
+	close(logView.stopCh)
+}
 
-	logView.Content.Clear()
-
-	go func() {
-		logView.Stop()
-		logView.stopCh = make(chan struct{})
-		logView.handler(logView.PodName, tview.ANSIWriter(logView.Content), callback, logView.stopCh)
-	}()
+func (logView *LogView) Refresh() {
+	logView.Stop()
+	logView.Start()
 }
