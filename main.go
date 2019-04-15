@@ -5,7 +5,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/ZacharyChang/kcui/k8s"
 	"github.com/ZacharyChang/kcui/pkg/log"
 	"github.com/ZacharyChang/kcui/pkg/option"
 	"github.com/ZacharyChang/kcui/view"
@@ -18,7 +17,7 @@ import (
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "kcui"
+	app.Name = "KCUI"
 	app.Compiled = time.Now()
 	app.Usage = "k8s log tail tool"
 
@@ -40,24 +39,18 @@ func main() {
 }
 
 func startView(opts *option.Options) error {
-	client := k8s.NewClient(opts)
 	if opts.Debug {
 		log.SetLogLevel(log.DebugLevel)
 	}
 
 	app := tview.NewApplication()
-	podListView := view.NewPodListView()
-	podListView.Content.ShowSecondaryText(false)
-	podListView.Content.SetBorder(true).SetTitle(" Pod ")
-	podListView.SetPodList(client.GetPodNames())
+	podListView := view.NewPodListView(opts)
 
-	logView := view.NewLogView()
-	logView.Content.SetBorder(true).SetTitle(" Log ")
+	logView := view.NewLogView(opts)
 	podListView.Refresh()
 	podName, _ := podListView.Content.GetItemText(podListView.Content.GetCurrentItem())
 
 	logView.PodName = podName
-	logView.SetHandler(client.PodLogHandler)
 	logView.Refresh()
 	podListView.Content.SetChangedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
 		logView.PodName = mainText

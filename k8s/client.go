@@ -21,10 +21,6 @@ type Client struct {
 	kubeclient *kubernetes.Clientset
 }
 
-type Handler interface {
-	Handle() *io.Writer
-}
-
 func NewClient(opts *option.Options) *Client {
 	config, err := clientcmd.BuildConfigFromFlags("", opts.Kubeconfig)
 	if err != nil {
@@ -51,7 +47,7 @@ func (c *Client) GetNamespace() string {
 	return c.namespace
 }
 
-func (c *Client) PodLogHandler(podName string, w io.Writer, stopCh <-chan struct{}) {
+func (c *Client) TailPodLog(podName string, w io.Writer, stopCh <-chan struct{}) {
 	log.Debugf("client: %v", c)
 	log.Debugf("namespace: %s", c.namespace)
 	log.Debugf("getting log from %s:%s", c.namespace, podName)
@@ -94,7 +90,7 @@ func (c *Client) PodLogHandler(podName string, w io.Writer, stopCh <-chan struct
 	return
 }
 
-func (c *Client) GetPodNames() (names []string) {
+func (c *Client) ListPods() (names []string) {
 	log.Debug("getPodNames() called")
 	pods, err := c.kubeclient.CoreV1().Pods(c.namespace).List(metav1.ListOptions{})
 	if err != nil {
