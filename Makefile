@@ -4,6 +4,7 @@ CHECKS:=check
 BUILDOPTS:=-v
 LDFLAGS="-w -s"
 CGO_ENABLED:=0
+BUILD_DIR=build
 
 .PHONY: all
 all: build
@@ -16,6 +17,15 @@ build: clean
 linux: clean
 	$(eval SYSTEM := GOOS=linux)
 	GO111MODULE=on CGO_ENABLED=$(CGO_ENABLED) $(SYSTEM) go build $(BUILDOPTS) -ldflags=$(LDFLAGS) -o $(BINARY)
+
+.PHONY: all
+all: clean
+	$(eval SYSTEM := GOOS=linux)
+	GO111MODULE=on CGO_ENABLED=$(CGO_ENABLED) $(SYSTEM) go build $(BUILDOPTS) -ldflags=$(LDFLAGS) -o $(BUILD_DIR)/$(BINARY)_linux
+	$(eval SYSTEM := GOOS=darwin)
+	GO111MODULE=on CGO_ENABLED=$(CGO_ENABLED) $(SYSTEM) go build $(BUILDOPTS) -ldflags=$(LDFLAGS) -o $(BUILD_DIR)/$(BINARY)_darwin
+	$(eval SYSTEM := GOOS=windows)
+	GO111MODULE=on CGO_ENABLED=$(CGO_ENABLED) $(SYSTEM) go build $(BUILDOPTS) -ldflags=$(LDFLAGS) -o $(BUILD_DIR)/$(BINARY)_windows.exe
 
 .PHONY: test
 test:

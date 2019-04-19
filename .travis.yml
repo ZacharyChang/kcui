@@ -1,23 +1,24 @@
 language: go
-
 go:
-  - "1.12"
-
+  - '1.12'
 services:
   - docker
-
 jobs:
   include:
     - stage: E2E Tests
       before_script:
-        # Download and install KinD
         - go get sigs.k8s.io/kind
-        # Create a new Kubernetes cluster using KinD
         - kind create cluster
-        # Set KUBECONFIG environment variable
         - export KUBECONFIG="$(kind get kubeconfig-path)"
-        # Install ginkgo to go path
         - go get github.com/onsi/ginkgo/ginkgo
       script:
-        - make
         - make test
+before_deploy:
+  - make all
+deploy:
+  provider: releases
+  api_key:
+    secure: oULK5//msh80iIV00uCFq+wf/fm5VCaw1yBbkzL1vCXeZaGUSdJSR31h++XZTB2Xuvz1lDhtAPw+MUjPLcvKOVjIB3fXyKIhEM5tuTlivAI+cRRVfV8Fjm6d4IXo3Kny0U66XRG5v2/jDUcUxzHyqWevXh9kqelXG/CJrFHO+4fib4Qs8jUo2I0p4WJZvzH3bwhNeDXMB3250rNnRcOBOsm/XxE08csWkLu6Z4gEaqGJTB6NzoxO0zJkSQY0Vl3vcC4Ntjs9PAzEj/XoWfPSWU9tZtes8xqlmuHkgsntRaRCuUwsU1isgnOOaYupqwVICch6E7fMkIxzW5PfEaJE6GpPKZydcuC1DCvq8c/kvwKitHvHCDUaeVhVEoARpMmw1txsHHFMJFn2Q+SzuBldoUKe3rMTfiuEOpvBMI+gyiuNRv0L8XY4ZXhdKvJOzgQlB48cBCVu/AM/dGuCGPivcqhqS/E0DcBMZmddsJGbjZvlpBWfsQSDkWfTcV0ZAp+2wIK0+1tyqVoYkQ2q2DbasftmP4qClnglVHFPQrcZ42xLCVsraglz28Yol2sEyYmughjcPw6JFOakCCISWnqTWEqd6Ot0PLRpLwZ0ZzhyALVvkdjjr3spWmu3l4bUlEZKCeVJSjU0bQBTNNiuF125XOdjR7i9ZxcVI3EPqVxF0kE=
+  file: directory/*
+  on:
+    repo: ZacharyChang/kcui
