@@ -7,14 +7,18 @@ jobs:
   include:
     - stage: E2E Tests
       before_script:
+        # install upx for compression
+        - sudo apt-get update && sudo apt-get install upx-ucl
+        # start k8s cluster in KinD
         - go get sigs.k8s.io/kind
         - kind create cluster
         - export KUBECONFIG="$(kind get kubeconfig-path)"
+        # install ginkgo for testing
         - go get github.com/onsi/ginkgo/ginkgo
       script:
         - make test
 before_deploy:
-  - make all
+  - make compress-all
 deploy:
   provider: releases
   api_key:

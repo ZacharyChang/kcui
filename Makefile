@@ -39,3 +39,7 @@ clean:
 .PHONY: compress
 compress: $(BINARY)
 	upx $(BINARY)
+
+.PHONY: compress-all
+compress-all: all
+	upx -9 $(BUILD_DIR)/*
