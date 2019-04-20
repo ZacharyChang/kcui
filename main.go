@@ -7,6 +7,7 @@ import (
 
 	"github.com/ZacharyChang/kcui/pkg/log"
 	"github.com/ZacharyChang/kcui/pkg/option"
+	"github.com/ZacharyChang/kcui/version"
 	"github.com/ZacharyChang/kcui/view"
 
 	"github.com/gdamore/tcell"
@@ -20,6 +21,7 @@ func main() {
 	app.Name = "KCUI"
 	app.Compiled = time.Now()
 	app.Usage = "k8s log tail tool"
+	app.Version = version.Version
 
 	opts := option.NewOptions()
 	opts.AddFlags(app)

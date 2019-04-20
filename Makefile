@@ -2,7 +2,10 @@ BINARY:=kcui
 SYSTEM:=
 CHECKS:=check
 BUILDOPTS:=-v
-LDFLAGS="-w -s"
+PKG:=github.com/ZacharyChang/kcui
+VERSION:=`git describe --tags`
+GIT_HASH:=`git describe --always`
+LDFLAGS="-w -s -X $(PKG)/version.Version=$(VERSION) -X $(PKG)/version.GitHash=$(GIT_HASH)"
 CGO_ENABLED:=0
 BUILD_DIR=build
 
@@ -42,4 +45,5 @@ compress: $(BINARY)
 
 .PHONY: compress-all
 compress-all: all
-	upx -9 $(BUILD_DIR)/*
+	upx -9 $(BUILD_DIR)/$(BINARY)_linux
+	upx -9 $(BUILD_DIR)/$(BINARY)_windows.exe
