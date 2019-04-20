@@ -1,0 +1,31 @@
+= KCUI - Kubernetes Console User Interface
+
+image:https://travis-ci.org/ZacharyChang/kcui.svg?branch=master[alt="Build Status", link="https://travis-ci.org/ZacharyChang/kcui"]
+image:https://goreportcard.com/badge/github.com/ZacharyChang/kcui[alt="Go Report Card", link="https://goreportcard.com/report/github.com/ZacharyChang/kcui"]
+
+== Introduction
+KCUI is a simple tool to monitor the k8s pods and logs. From this tool you can easily watch the pods status and logs changing.
+
+== Features
+1. Configuration from kubeconfig file (default from $HOME/.kube/config)
+2. Change namespace from command params (default as 'default')
+3. List current pods in the panel.
+4. Tail logs from selected pod.
+
+== Installation
+=== macOS
+....
+curl -Lo kcui https://github.com/ZacharyChang/kcui/releases/download/v0.1.2/kcui_darwin && chmod +x kcui
+....
+
+=== Linux
+....
+curl -Lo kcui https://github.com/ZacharyChang/kcui/releases/download/v0.1.2/kcui_linux && chmod +x kcui
+....
+
+=== Windows ( not tested )
+....
+curl -Lo kcui.exe https://github.com/ZacharyChang/kcui/releases/download/v0.1.2/kcui_windows.exe
+....
+
+

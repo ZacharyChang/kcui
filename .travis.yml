@@ -8,7 +8,8 @@ jobs:
     - stage: E2E Tests
       before_script:
         # install upx for compression
-        - sudo apt-get update && sudo apt-get install upx-ucl
+        - curl -Lo upx.tar.xz https://github.com/upx/upx/releases/download/v3.95/upx-3.95-amd64_linux.tar.xz && tar xvf upx.tar.xz
+        - sudo mv upx-3.95-amd64_linux/upx /usr/local/bin
         # start k8s cluster in KinD
         - go get sigs.k8s.io/kind
         - kind create cluster
@@ -27,4 +28,4 @@ deploy:
   file: build/*
   skip_cleanup: true
   on:
-    all_branches: true
+    tags: true
