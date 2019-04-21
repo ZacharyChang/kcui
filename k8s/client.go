@@ -4,21 +4,23 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"strings"
 	"time"
 
 	"github.com/ZacharyChang/kcui/pkg/log"
 	"github.com/ZacharyChang/kcui/pkg/option"
 
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	listerv1 "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
 type Client struct {
 	namespace  string
 	kubeclient *kubernetes.Clientset
+	Factory    informers.SharedInformerFactory
+	podLister  listerv1.PodLister
 }
 
 func NewClient(opts *option.Options) *Client {
@@ -32,9 +34,14 @@ func NewClient(opts *option.Options) *Client {
 		panic(err.Error())
 	}
 
+	factoryOpts := informers.WithNamespace(opts.Namespace)
+	f := informers.NewSharedInformerFactoryWithOptions(client, 0, factoryOpts)
+
 	return &Client{
 		namespace:  opts.Namespace,
 		kubeclient: client,
+		Factory:    f,
+		podLister:  f.Core().V1().Pods().Lister(),
 	}
 }
 
@@ -87,18 +94,5 @@ func (c *Client) TailPodLog(podName string, w io.Writer, stopCh <-chan struct{})
 		}
 		time.Sleep(500)
 	}
-	return
-}
-
-func (c *Client) ListPods() (names []string) {
-	log.Debug("getPodNames() called")
-	pods, err := c.kubeclient.CoreV1().Pods(c.namespace).List(metav1.ListOptions{})
-	if err != nil {
-		panic(err.Error())
-	}
-	for _, v := range pods.Items {
-		names = append(names, v.ObjectMeta.Name)
-	}
-	log.Debugf("got pods: [ %s ]", strings.Join(names, " "))
 	return
 }

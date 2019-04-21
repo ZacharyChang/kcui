@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/ZacharyChang/kcui/pkg/log"
@@ -49,13 +50,12 @@ func startView(opts *option.Options) error {
 	podListView := view.NewPodListView(opts)
 
 	logView := view.NewLogView(opts)
-	podListView.Refresh()
-	podName, _ := podListView.Content.GetItemText(podListView.Content.GetCurrentItem())
+	stopCh := make(chan struct{})
+	defer close(stopCh)
+	podListView.Run(stopCh)
 
-	logView.PodName = podName
-	logView.Refresh()
 	podListView.Content.SetChangedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
-		logView.PodName = mainText
+		logView.PodName = strings.Split(mainText, ":")[1]
 		logView.Refresh()
 	})
 	flex := tview.NewFlex().
@@ -71,7 +71,6 @@ func startView(opts *option.Options) error {
 		return event
 	})
 	go wait.Forever(func() {
-		log.Debug("loop for updating...")
 		app.Draw()
 	}, time.Millisecond*500)
 	if err := app.SetRoot(flex, true).Run(); err != nil {
