@@ -82,14 +82,14 @@ func (view *PodListView) Reload() {
 	}
 	sort.Strings(keys)
 	view.Content.Clear()
-	for _, key := range keys {
+	for i, key := range keys {
 		pod := view.PodMap[key]
 		phase := pod.Status.Phase
 		if pod.GetObjectMeta().GetDeletionTimestamp() != nil {
 			phase = "Terminating"
 		}
 		log.Debug(view.PodMap[key].Status)
-		view.Content.AddItem(fmt.Sprintf("%s:%s", phase, pod.Name), "", 'a', nil)
+		view.Content.AddItem(fmt.Sprintf("%s:%s", phase, pod.Name), "", rune('a'+i), nil)
 	}
 }
 

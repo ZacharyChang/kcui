@@ -21,7 +21,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "KCUI"
 	app.Compiled = time.Now()
-	app.Usage = "k8s log tail tool"
+	app.Usage = "A simple tool to monitor the k8s pods and logs."
 	app.Version = version.Version
 
 	opts := option.NewOptions()
