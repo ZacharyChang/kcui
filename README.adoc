@@ -1,5 +1,7 @@
 = KCUI - Kubernetes Console User Interface
 
+:experimental:
+
 image:https://travis-ci.org/ZacharyChang/kcui.svg?branch=master[alt="Build Status", link="https://travis-ci.org/ZacharyChang/kcui"]
 image:https://goreportcard.com/badge/github.com/ZacharyChang/kcui[alt="Go Report Card", link="https://goreportcard.com/report/github.com/ZacharyChang/kcui"]
 
