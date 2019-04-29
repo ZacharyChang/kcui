@@ -34,7 +34,7 @@ func (opts *Options) AddFlags(app *cli.App) {
 			Name:        "namespace",
 			Usage:       "Namespace to query.",
 			Destination: &opts.Namespace,
-			Value:       "default",
+			Value:       "",
 		},
 		cli.BoolFlag{
 			Name:        "debug",

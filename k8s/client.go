@@ -37,8 +37,17 @@ func NewClient(opts *option.Options) *Client {
 	factoryOpts := informers.WithNamespace(opts.Namespace)
 	f := informers.NewSharedInformerFactoryWithOptions(client, 0, factoryOpts)
 
+	kubeconfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		clientcmd.NewDefaultClientConfigLoadingRules(),
+		&clientcmd.ConfigOverrides{},
+	)
+	ns := opts.Namespace
+	if ns == "" {
+		ns, _, _ = kubeconfig.Namespace()
+	}
+
 	return &Client{
-		namespace:  opts.Namespace,
+		namespace:  ns,
 		kubeclient: client,
 		Factory:    f,
 		podLister:  f.Core().V1().Pods().Lister(),
