@@ -2,9 +2,11 @@ package log
 
 import (
 	"fmt"
+	"sync"
 )
 
 type Logger struct {
+	sync.Mutex
 	Name     string
 	handlers []Handler
 }
@@ -21,6 +23,7 @@ func (logger *Logger) AddHandler(handler Handler) *Logger {
 }
 
 func (logger *Logger) Record(record ...interface{}) error {
+	logger.Lock()
 	for _, handler := range logger.handlers {
 		for _, v := range record {
 			_, err := fmt.Fprint(handler.Writer(), v)
@@ -29,6 +32,7 @@ func (logger *Logger) Record(record ...interface{}) error {
 			}
 		}
 	}
+	logger.Unlock()
 	return nil
 }
 
