@@ -34,17 +34,18 @@ func NewClient(opts *option.Options) *Client {
 		panic(err.Error())
 	}
 
-	factoryOpts := informers.WithNamespace(opts.Namespace)
-	f := informers.NewSharedInformerFactoryWithOptions(client, 0, factoryOpts)
-
-	kubeconfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		clientcmd.NewDefaultClientConfigLoadingRules(),
-		&clientcmd.ConfigOverrides{},
-	)
+	// if namespace is not set from command, read from config file
 	ns := opts.Namespace
 	if ns == "" {
+		kubeconfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+			clientcmd.NewDefaultClientConfigLoadingRules(),
+			&clientcmd.ConfigOverrides{},
+		)
 		ns, _, _ = kubeconfig.Namespace()
 	}
+
+	factoryOpts := informers.WithNamespace(ns)
+	f := informers.NewSharedInformerFactoryWithOptions(client, 0, factoryOpts)
 
 	return &Client{
 		namespace:  ns,
