@@ -88,7 +88,6 @@ func (view *PodListView) Reload() {
 		if pod.GetObjectMeta().GetDeletionTimestamp() != nil {
 			phase = "Terminating"
 		}
-		log.Debug(view.PodMap[key].Status)
 		view.Content.AddItem(fmt.Sprintf("%s:%s", phase, pod.Name), "", rune('a'+i), nil)
 	}
 }
