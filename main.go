@@ -31,7 +31,6 @@ func main() {
 		if err := startView(opts); err != nil {
 			return cli.NewExitError(fmt.Sprintf("application failed to start: %v\n", err), 1)
 		}
-		log.Info("application started...")
 		return nil
 	}
 
@@ -41,7 +40,9 @@ func main() {
 
 }
 
-type Slide func(options *option.Options, stopCh chan struct{}) (title string, content tview.Primitive)
+type Slide interface {
+	Show(app *tview.Application, stopCh chan struct{}) (title string, content tview.Primitive)
+}
 
 // The application.
 var app = tview.NewApplication()
@@ -49,7 +50,7 @@ var app = tview.NewApplication()
 func startView(opts *option.Options) error {
 	// The presentation slides.
 	slides := []Slide{
-		page.Log,
+		page.NewLogPage(opts),
 	}
 
 	// The bottom row has some info on where we are.
@@ -75,11 +76,14 @@ func startView(opts *option.Options) error {
 		pages.SwitchToPage(strconv.Itoa(currentSlide))
 	}
 	stopCh := make(chan struct{})
-	defer close(stopCh)
+	defer func() {
+		close(stopCh)
+		log.Info("application stopped")
+	}()
 
 	for index, slide := range slides {
-		title, primitive := slide(opts, stopCh)
-		pages.AddPage(strconv.Itoa(index), primitive, true, index == currentSlide)
+		title, flex := slide.Show(app, stopCh)
+		pages.AddPage(strconv.Itoa(index), flex, true, index == currentSlide)
 		_, _ = fmt.Fprintf(info, `%d ["%d"][darkcyan]%s[white][""]  `, index+1, index, title)
 	}
 
@@ -111,6 +115,7 @@ func startView(opts *option.Options) error {
 	}, time.Millisecond*500)
 
 	// Start the application.
+	log.Info("application starting...")
 	if err := app.SetRoot(layout, true).Run(); err != nil {
 		panic(err)
 	}
