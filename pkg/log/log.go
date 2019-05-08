@@ -14,7 +14,7 @@ const (
 
 var (
 	currentLevel = InfoLevel
-	logger       = NewLogger("root").AddHandler(NewFileHandler("test.log"))
+	Root         = NewLogger("root")
 )
 
 // SetLogLevel set current log level, only the higher level log will be written to the file
@@ -39,7 +39,7 @@ func log(level logLevel, v ...interface{}) {
 				file, line = _file, _line
 			}
 		}
-		logger.Record(currentTime(), level.prefix, fmt.Sprintf("%s:%d\t| ", file, line), fmt.Sprint(v...), "\n")
+		_ = Root.Record(currentTime(), level.prefix, fmt.Sprintf("%s:%d\t| ", file, line), fmt.Sprint(v...), "\n")
 	}
 }
 
@@ -56,7 +56,7 @@ func logf(level logLevel, format string, v ...interface{}) {
 				file, line = _file, _line
 			}
 		}
-		logger.Record(currentTime(), level.prefix, fmt.Sprintf("%s:%d\t| ", file, line), fmt.Sprintf(format, v...), "\n")
+		_ = Root.Record(currentTime(), level.prefix, fmt.Sprintf("%s:%d\t| ", file, line), fmt.Sprintf(format, v...), "\n")
 	}
 }
 
