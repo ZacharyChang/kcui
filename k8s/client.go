@@ -16,14 +16,21 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+var instance *Client
+
 type Client struct {
-	namespace  string
-	kubeclient *kubernetes.Clientset
+	Namespace  string
+	KubeClient *kubernetes.Clientset
+	KubeConfig clientcmd.ClientConfig
 	Factory    informers.SharedInformerFactory
 	podLister  listerv1.PodLister
 }
 
+// NewClient returns a singleton instance of k8s client
 func NewClient(opts *option.Options) *Client {
+	if instance != nil {
+		return instance
+	}
 	config, err := clientcmd.BuildConfigFromFlags("", opts.Kubeconfig)
 	if err != nil {
 		panic(err.Error())
@@ -36,41 +43,34 @@ func NewClient(opts *option.Options) *Client {
 
 	// if namespace is not set from command, read from config file
 	ns := opts.Namespace
+	kubeconfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		clientcmd.NewDefaultClientConfigLoadingRules(),
+		&clientcmd.ConfigOverrides{},
+	)
 	if ns == "" {
-		kubeconfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-			clientcmd.NewDefaultClientConfigLoadingRules(),
-			&clientcmd.ConfigOverrides{},
-		)
 		ns, _, _ = kubeconfig.Namespace()
 	}
 
 	factoryOpts := informers.WithNamespace(ns)
 	f := informers.NewSharedInformerFactoryWithOptions(client, 0, factoryOpts)
 
-	return &Client{
-		namespace:  ns,
-		kubeclient: client,
+	instance = &Client{
+		Namespace:  ns,
+		KubeClient: client,
+		KubeConfig: kubeconfig,
 		Factory:    f,
 		podLister:  f.Core().V1().Pods().Lister(),
 	}
-}
-
-func (c *Client) SetNamespace(ns string) *Client {
-	c.namespace = ns
-	return c
-}
-
-func (c *Client) GetNamespace() string {
-	return c.namespace
+	return instance
 }
 
 func (c *Client) TailPodLog(podName string, w io.Writer, stopCh <-chan struct{}) {
 	log.Debugf("client: %v", c)
-	log.Debugf("namespace: %s", c.namespace)
-	log.Debugf("getting log from %s:%s", c.namespace, podName)
+	log.Debugf("namespace: %s", c.Namespace)
+	log.Debugf("getting log from %s:%s", c.Namespace, podName)
 
 	lines := int64(50)
-	req := c.kubeclient.CoreV1().Pods(c.namespace).GetLogs(podName, &corev1.PodLogOptions{
+	req := c.KubeClient.CoreV1().Pods(c.Namespace).GetLogs(podName, &corev1.PodLogOptions{
 		TailLines: &lines,
 		Follow:    true,
 	})

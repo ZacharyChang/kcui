@@ -6,6 +6,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/ZacharyChang/kcui/pkg/option"
 )
 
 const (
@@ -16,6 +18,13 @@ var (
 	currentLevel = InfoLevel
 	Root         = NewLogger("root")
 )
+
+func ApplyOptions(opts option.Options) {
+	if opts.Debug {
+		Root.AddHandler(NewFileHandler("debug.log"))
+		SetLogLevel(DebugLevel)
+	}
+}
 
 // SetLogLevel set current log level, only the higher level log will be written to the file
 func SetLogLevel(level logLevel) {

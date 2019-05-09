@@ -19,7 +19,7 @@ var _ = Describe("K8s", func() {
 		opts = option.NewOptions()
 		opts.Kubeconfig = os.Getenv("KUBECONFIG")
 		testClient = NewClient(opts)
-		testClient.SetNamespace("test")
+		testClient.Namespace = "test"
 	})
 
 	Describe("Test kubernetes client", func() {
@@ -28,7 +28,7 @@ var _ = Describe("K8s", func() {
 				Expect(testClient).ShouldNot(BeNil())
 			})
 			It("namespace should be test", func() {
-				Expect(testClient.GetNamespace()).To(Equal("test"))
+				Expect(testClient.Namespace).To(Equal("test"))
 			})
 		})
 	})
