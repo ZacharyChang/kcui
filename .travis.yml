@@ -11,7 +11,7 @@ jobs:
         - curl -Lo upx.tar.xz https://github.com/upx/upx/releases/download/v3.95/upx-3.95-amd64_linux.tar.xz && tar xvf upx.tar.xz
         - sudo mv upx-3.95-amd64_linux/upx /usr/local/bin
         # start k8s cluster in KinD
-        - go get sigs.k8s.io/kind
+        - GO111MODULE=on go get sigs.k8s.io/kind
         - kind create cluster
         - export KUBECONFIG="$(kind get kubeconfig-path)"
         # install ginkgo for testing
