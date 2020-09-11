@@ -32,7 +32,7 @@ all: clean
 
 .PHONY: test
 test:
-	GO111MODULE=on ginkgo -v -race --cover ./...
+	GO111MODULE=off ginkgo -v -race --cover ./...
 
 .PHONY: clean
 clean:
