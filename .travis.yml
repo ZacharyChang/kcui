@@ -1,8 +1,16 @@
 language: go
 go:
-  - '1.12'
+  - '1.14'
 services:
   - docker
+
+env:
+  - GO111MODULE=on
+
+install: true
+
+script: go test -v -mod=vendor ./...
+
 jobs:
   include:
     - stage: E2E Tests
@@ -11,11 +19,12 @@ jobs:
         - curl -Lo upx.tar.xz https://github.com/upx/upx/releases/download/v3.95/upx-3.95-amd64_linux.tar.xz && tar xvf upx.tar.xz
         - sudo mv upx-3.95-amd64_linux/upx /usr/local/bin
         # start k8s cluster in KinD
-        - GO111MODULE=on go get sigs.k8s.io/kind
+        - go get sigs.k8s.io/kind
         - kind create cluster
-        - export KUBECONFIG="$(kind get kubeconfig-path)"
+        - kind get kubeconfig > kubeconfig
+        - export KUBECONFIG=$PWD/kubeconfig
         # install ginkgo for testing
-        - go get github.com/onsi/ginkgo/ginkgo
+        - go get github.com/onsi/ginkgo/ginkgo@v1.8.0
       script:
         - make test
 before_deploy:
